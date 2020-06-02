@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.blog.dao.CommentDao">
+
+	<resultMap type="Comment" id="CommentResult">
+		<result property="id" column="id" />
+		<result property="userIp" column="userIp" />
+		<result property="content" column="content" />
+		<result property="commentDate" column="commentDate" />
+		<result property="state" column="state" />
+		<!-- 这里直接通过BlogDao.findById这个方法，根据博客id，查询博客，相当于连接查询 -->
+		<association property="blog" column="blogId"
+			select="com.blog.dao.BlogDao.findById"></association>
+	</resultMap>
+
+	<select id="list" parameterType="Map" resultMap="CommentResult">
+		select * from t_comment
+		<where>
+			<if test="blogId!=null">
+				and blogId = #{blogId}
+			</if>
+			<if test="state!=null">
+				and state = #{state}
+			</if>
+		</where>
+		order by commentDate
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+	
+	<select id="getTotal" parameterType="Map" resultType="Long">
+		select count(*) from t_comment
+		<where>
+			<if test="state!=null and state!='' ">
+				and state = #{state}
+			</if>
+		</where>
+	</select>
+	
+	<insert id="add" parameterType="Comment">
+		insert into t_comment(userIp,content,commentDate,state,blogId)
+			values(#{userIp},#{content},now(),0,#{blog.id})
+	</insert>
+	
+	<delete id="delete" parameterType="Integer">
+		delete from t_comment where id = #{id}
+	</delete>
+	
+	<!-- 这个语句应用为：删除博客时，连带把该博客下面的评论一起删除 -->
+	<delete id="deleteByBlogId" parameterType="Integer">
+		delete from t_comment where blogId = #{blogId}
+	</delete>
+		
+	<update id="update" parameterType="Comment">
+		update t_comment
+		<set>
+			<if test="state!=null and state!=''">
+				state=#{state},
+			</if>
+		</set>
+		where id = #{id}
+	</update>
+</mapper>
+
+
+
+
+
+
+

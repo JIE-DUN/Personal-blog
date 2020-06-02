@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+						http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+						http://www.springframework.org/schema/p
+						http://www.springframework.org/schema/p/spring-p-4.0.xsd
+						http://www.springframework.org/schema/aop
+						http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-4.0.xsd
+						http://www.springframework.org/schema/jee
+						http://www.springframework.org/schema/jee/spring-jee-4.0.xsd
+						http://www.springframework.org/schema/tx
+						http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	
+	<!-- 配置数据源 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+		<property name="url" value="jdbc:mysql://localhost:3306/db_blog?user=root&amp;password=root&amp;useUnicode=true&amp;characterEncoding=utf8"/>
+		<!-- 
+		<property name="username" value="root"></property>
+		<property name="password" value="root"></property>
+		 -->
+	</bean>
+	
+	<!-- 配置mybatis整合spring的核心类，即sqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 指定数据源 -->
+		<property name="dataSource" ref="dataSource"/>
+		<!-- 自动扫描存放Mapper文件的文件夹 -->
+		<property name="mapperLocations" value="classpath:/mappers/*.xml"/>
+		<!-- 指定mybatis配置文件 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml"/>
+	</bean>
+	
+	<!-- Dao接口所在包名，Spring会自动扫描这个包下面的类 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.blog.dao"/>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+	</bean>
+	
+	<!-- 数据源事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<!-- 自定义Realm -->
+	<bean id="myRealm" class="com.blog.realm.MyRealm"/>
+	
+	<!-- 安全管理器，这次主要实现登录权限验证 -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="myRealm"/>
+	</bean>
+	<!-- shiro过滤器 -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<!-- shiro核心安全接口，这属性是必须，意思是shiroFilter使用securityManger这个安全管理器 -->
+		<property name="securityManager" ref="securityManager" />
+		<!-- 身份认证失败，跳转到的登录页面的配置 -->
+		<property name="loginUrl" value="/login.jsp"/>
+		<property name="filterChainDefinitions">
+			<!-- "/login"页面不用过滤，"/admin/**"页面就要登录 -->
+			<value>
+				/login=anon
+				/admin/**=authc
+			</value>
+		</property>
+	</bean>
+
+	<!-- 保证实现了shiro内部lifecycle函数的bean执行 -->
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"></bean>
+	
+	<!-- 开启shiro注解 -->
+	<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor"></bean>
+
+	<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+		<property name="securityManager" ref="securityManager" />
+	</bean>	
+	
+	<!-- 配置事务特征，隔离级别 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!-- 所有方法(*)，都用default -->
+			<tx:method name="insert*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="update*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="edit*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="save*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="add*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="new*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="set*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="remove*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="delete*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="change*" propagation="REQUIRED" isolation="DEFAULT"/>
+			<tx:method name="get*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="find*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="load*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="*" propagation="REQUIRED" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+	<!-- 配置事务切面，以下的所有方法执行上面的事务特征 -->
+	<aop:config>
+		<!-- com.blog.service:	com.blog.service下任何包以及包的子包;
+			 .*:				所有的接口类以及接口
+			 .*:				里面的所有方法*************
+			 (..):				参数不限 -->
+		<aop:pointcut expression="execution(* com.blog.service.*.*(..))" id="serviceOperation"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="serviceOperation"/>
+	</aop:config>
+	
+	<!-- 自动扫描 -->
+	<context:component-scan base-package="com.blog.service"/>
+</beans>

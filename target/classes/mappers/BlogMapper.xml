@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.blog.dao.BlogDao">
+
+	<resultMap type="Blog" id="BlogResult">
+		<result property="id" column="id" />
+		<result property="title" column="title" />
+		<result property="summary" column="summary" />
+		<result property="releaseDate" column="releaseDate" />
+		<result property="clickHit" column="clickHit" />
+		<result property="replyHit" column="replyHit" />
+		<result property="content" column="content" />
+		<result property="keyWord" column="keyWord" />
+		<!-- 这里直接通过BlogTypeDao.findById这个方法，根据博客类型id，查询博客类型，相当于连接查询 -->
+		<association property="blogType" column="typeId"
+			select="com.blog.dao.BlogTypeDao.findById"></association>
+	</resultMap>
+
+	<!-- 这个主要用于主页查询，所以只需要日期和数量 -->
+	<select id="countList" resultMap="BlogResult">
+		select
+			date_format(releaseDate,'%Y年%m月') as releaseDateStr,
+			count(*) as blogCount
+		from t_blog
+		group by date_format(releaseDate,'%Y年%m月')
+		order by date_format(releaseDate,'%Y年%m月') desc
+	</select>
+
+	<select id="list" parameterType="Map" resultMap="BlogResult">
+		select * from t_blog
+		<where>
+			<if test="title!=null and title!='' ">
+				and title like #{title}
+			</if>
+			<if test="typeId!=null and typeId!='' ">
+				and typeId = #{typeId}
+			</if>
+			<if test="releaseDateStr!=null and releaseDateStr!='' ">
+				and date_format(releaseDate,'%Y年%m月') = #{releaseDateStr}
+			</if>
+		</where>
+		order by releaseDate desc
+		<if test="start!=null and size!=null ">
+			limit #{start} ,#{size}
+		</if>
+	</select>
+
+	<select id="getTotal" parameterType="Map" resultType="Long">
+		select count(*) from t_blog
+		<where>
+			<if test="title!=null and title!='' ">
+				and title like #{title}
+			</if>
+			<if test="typeId!=null and typeId!='' ">
+				and typeId = #{typeId}
+			</if>
+			<if test="releaseDateStr!=null and releaseDateStr!='' ">
+				and date_format(releaseDate,'%Y年%m月') = #{releaseDateStr}
+			</if>
+		</where>
+	</select>
+
+	<select id="findById" parameterType="Integer" resultMap="BlogResult">
+		select * from t_blog where id = #{id}
+	</select>
+
+	<!-- 因为typeId对应位置传进来的是一个blogType，所以使用blogType.id直接获得typeId -->
+	<insert id="add" useGeneratedKeys="true" keyProperty="id" parameterType="Blog">
+		insert into t_blog(title,summary,releaseDate,clickHit,replyHit,content,keyWord,typeId) 
+			values(#{title},#{summary},now(),0,0,#{content},#{keyWord},#{blogType.id})
+	</insert>
+	
+	<update id="update" parameterType="Blog">
+		update t_blog
+		<set>
+			<if test="title!=null and title!='' ">
+				title=#{title},
+			</if>
+			<if test="summary!=null and summary!='' ">
+				summary=#{summary},
+			</if>
+			<if test="content!=null and content!='' ">
+				content=#{content},
+			</if>
+			<if test="blogType.id!=null">
+				typeId=#{blogType.id},
+			</if>
+			<if test="clickHit!=null and clickHit!='' ">
+				clickHit=#{clickHit},
+			</if>
+			<if test="replyHit!=null and replyHit!='' ">
+				replyHit=#{replyHit},
+			</if>
+			<if test="keyWord!=null and keyWord!='' ">
+				keyWord=#{keyWord},
+			</if>
+		</set>
+		where id = #{id}
+	</update>
+	
+	<delete id="delete" parameterType="Integer">
+		delete from t_blog where id = #{id}
+	</delete>
+	
+	<select id="getBlogTypeById" parameterType="Integer" resultType="Integer">
+		select count(*) from t_blog where typeId = #{typeId}
+	</select>
+	
+	<!-- 倒序排列，然后取1个大于当前查询id的结果 -->
+	<select id="getLastBlog" parameterType="Integer" resultMap="BlogResult">
+		select * from t_blog where id&lt;#{id} order by id desc limit 1
+	</select>
+	
+	<!-- 正序排列，然后取1个大于当前查询id的结果 -->
+	<select id="getNextBlog" parameterType="Integer" resultMap="BlogResult">
+		select * from t_blog where id&gt;#{id} order by id asc limit 1
+	</select>
+</mapper>
+
+
+
+
+
+
+

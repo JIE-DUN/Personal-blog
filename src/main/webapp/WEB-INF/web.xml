@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+						http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	id="WebApp_ID" version="3.0">
+	
+	<display-name>Blog</display-name>
+
+	<!-- 欢迎页面，主要是当做跳板，进入index -->
+	<welcome-file-list>
+		<welcome-file>welcome.jsp</welcome-file>
+	</welcome-file-list>
+
+	<!-- Shiro过滤器定义 -->
+	<filter>
+		<filter-name>shiroFilter</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+		<init-param>
+			<param-name>targetFilterLifecycle</param-name>
+			<!-- 默认为false,表示生命周期由SpringApplicationContext管理， 设置为ture后表示由ServletContainer管理 -->
+			<param-value>true</param-value>
+		</init-param>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>shiroFilter</filter-name>
+		<!-- 所有(/*)都由shiroFilter过滤 -->
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- Spring配置文件 -->
+	<!-- needed for ContextLoaderListener -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:applicationContext.xml</param-value>
+	</context-param>
+
+	<!-- 编码过滤器，针对中文问题 -->
+	<filter>
+		<filter-name>encodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<async-supported>true</async-supported>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+		<init-param>
+			<param-name>forceEncoding</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>encodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- spring监听器,通过这个监听器监听，确保web服务器启动时，完成spring的容器初始化 -->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<!-- 这个监听器主要用于服务器启动后加载一些缓存数据，以免每次调用这些数据都要访问一次数据库 -->
+	<listener>
+		<listener-class>com.blog.service.impl.InitComponent</listener-class>
+	</listener>
+	
+	<!-- 配置分发器servlet，添加对SpringMVC的支持 -->
+	<servlet>
+		<servlet-name>springMVC</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<!-- 监听指定的文件spring-mvc.xml -->
+			<param-value>classpath:spring-mvc.xml</param-value>
+		</init-param>
+		<!-- 启动服务器就启动这个分发器 -->
+		<load-on-startup>1</load-on-startup>
+		<async-supported>true</async-supported>
+	</servlet>
+	<!-- 将所有("*.do"、"*.html")请求映射到"springMVC"这个分发器进行处理 -->
+	<servlet-mapping>
+		<servlet-name>springMVC</servlet-name>
+		<url-pattern>*.do</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>springMVC</servlet-name>
+		<url-pattern>*.html</url-pattern>
+	</servlet-mapping>
+	
+</web-app>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
