@@ -5,7 +5,8 @@ Tomcat7.0 + JDK1.8 + Windows 7
 Java
 
 # 框架
-SSM —— Spring + SpringMVC + MyBatis
+后端：SSM —— Spring + SpringMVC + MyBatis
+前端：JQuery+Bootstrap
 
 # 数据库
 MySQL
