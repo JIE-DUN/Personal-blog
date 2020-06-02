@@ -1,10 +1,19 @@
-系统运行平台：Tomcat7.0 + JDK1.8 + Windows 7
-开发语言：Java
-框架：SSM —— Spring + SpringMVC + MyBatis
-数据库：MySQL
-开发环境：Eclispe
+# 系统运行平台
+Tomcat7.0 + JDK1.8 + Windows 7
 
-功能模块：
+# 开发语言
+Java
+
+# 框架
+SSM —— Spring + SpringMVC + MyBatis
+
+# 数据库
+MySQL
+
+# 开发环境
+Eclispe
+
+# 功能模块
 1.博客管理：包括博客的新建、修改、删除等功能
 2.博客类别管理：在前台发表的博客进行分类的字段，在后台可以添加、修改、删除博客类别
 3.评论管理模块：游客发表的评论要经过博主的审核才决定是否发表在前台
